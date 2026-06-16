@@ -1,1 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecurePass | Real-timepassword Strength Checker</title>
+    <meta name="description" content="A premium, real-time password strength evaluator designed with cybersecurity best practices. Evaluate your password security across multiple structural criteria instantly.">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #38bdf8;
+            --weak: #ef4444;
+            --medium: #f59e0b;
+            --strong: #10b981;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top left, #1e293b, #0f172a);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+        }
+
+        /* Decorative Background Elements */
+        .blob {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--accent-primary);
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            border-radius: 50%;
+        }
+
+        .blob-1 { top: -100px; right: -100px; }
+        .blob-2 { bottom: -100px; left: -100px; }
+
+        .app-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Form Styling */
+        .input-group {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 50px 16px 16px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .toggle-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Strength Meter */
+        .meter-container {
+            height: 6px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease;
+        }
+
+        .strength-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 24px;
+            display: block;
+            text-align: right;
+            min-height: 1.2em;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .checklist-item .icon {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .checklist-item svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: var(--transition);
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .checklist-item.satisfied {
+            color: var(--text-primary);
+        }
+
+        .checklist-item.satisfied .icon {
+            background: var(--strong);
+            border-color: var(--strong);
+            color: white;
+        }
+
+        .checklist-item.satisfied svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Responsive Improvements */
+        @media (max-width: 480px) {
+            .app-card {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <main class="app-card">
+            <header>
+                <h1>SecurePass</h1>
+                <p class="subtitle">Enter a password to check its strength</p>
+            </header>
+
+            <div class="input-group">
+                <label for="passwordInput" class="input-label">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="passwordInput" placeholder="Enter your password..." spellcheck="false" autocomplete="new-password">
+                    <button type="button" id="togglePassword" class="toggle-btn" aria-label="Toggle password visibility">
+                        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="meter-container">
+                <div id="meterBar" class="meter-bar"></div>
+            </div>
+            <span id="strengthStatus" class="strength-text"></span>
+
+            <ul class="checklist">
+                <li id="rule-length" class="checklist-item">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>8+ characters minimum</span>
+                </li>
+                <li id="rule-upper" class="checklist-item">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>At least one uppercase letter</span>
+                </li>
+                <li id="rule-lower" class="checklist-item">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>At least one lowercase letter</span>
+                </li>
+                <li id="rule-number" class="checklist-item">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>At least one numeric digit</span>
+                </li>
+                <li id="rule-special" class="checklist-item">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>At least one special character</span>
+                </li>
+            </ul>
+        </main>
+    </div>
+
+    <script>
+        const passwordInput = document.getElementById('passwordInput');
+        const toggleBtn = document.getElementById('togglePassword');
+        const meterBar = document.getElementById('meterBar');
+        const strengthStatus = document.getElementById('strengthStatus');
+        const eyeIcon = document.getElementById('eye-icon');
+
+        const rules = {
+            length: { el: document.getElementById('rule-length'), regex: /.{8,}/ },
+            upper:  { el: document.getElementById('rule-upper'),  regex: /[A-Z]/ },
+            lower:  { el: document.getElementById('rule-lower'),  regex: /[a-z]/ },
+            number: { el: document.getElementById('rule-number'), regex: /[0-9]/ },
+            special: { el: document.getElementById('rule-special'), regex: /[^A-Za-z0-9]/ }
+        };
+
+        // Toggle Password Visibility
+        toggleBtn.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            
+            // Update icon
+            if (isPassword) {
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        });
+
+        // Real-time Validation
+        passwordInput.addEventListener('input', () => {
+            const val = passwordInput.value;
+            let passedCount = 0;
+
+            // Check each rule
+            Object.keys(rules).forEach(key => {
+                const isValid = rules[key].regex.test(val);
+                if (isValid) {
+                    rules[key].el.classList.add('satisfied');
+                    passedCount++;
+                } else {
+                    rules[key].el.classList.remove('satisfied');
+                }
+            });
+
+            // Update Progress Bar & Status
+            updateStrengthMeter(passedCount, val.length);
+        });
+
+        function updateStrengthMeter(count, length) {
+            const percentage = length === 0 ? 0 : (count / 5) * 100;
+            meterBar.style.width = `${percentage}%`;
+
+            let color = 'transparent';
+            let status = '';
+
+            if (length > 0) {
+                if (count <= 2) {
+                    color = 'var(--weak)';
+                    status = 'Weak';
+                } else if (count <= 4) {
+                    color = 'var(--medium)';
+                    status = 'Medium';
+                } else {
+                    color = 'var(--strong)';
+                    status = 'Strong';
+                }
+            }
+
+            meterBar.style.backgroundColor = color;
+            strengthStatus.textContent = status;
+            strengthStatus.style.color = color;
+        }
+    </script>
+</body>
+</html>
 
